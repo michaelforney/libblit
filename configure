@@ -1,0 +1,26 @@
+#!/bin/sh
+
+: ${CC:=cc}
+: ${PKG_CONFIG:=pkg-config}
+
+fail() {
+	echo "$0: $*" >&2
+	exit 1
+}
+
+for arg; do
+	case "$arg" in
+	CC=*) CC=${arg#*=} ;;
+	CFLAGS=*) CFLAGS=${arg#*=} ;;
+	*) fail "unknown option '$arg'"
+	esac
+done
+
+DEPS='pixman-1'
+
+printf 'creating config.mk...'
+{
+	echo "CC=$CC"
+	echo "CFLAGS=$CFLAGS $($PKG_CONFIG --cflags $DEPS)"
+} >config.mk
+echo done
