@@ -1,6 +1,7 @@
 #!/bin/sh
 
 : ${CC:=cc}
+: ${GLSLANG:=glslangValidator}
 : ${PKG_CONFIG:=pkg-config}
 
 fail() {
@@ -22,5 +23,6 @@ printf 'creating config.mk...'
 {
 	echo "CC=$CC"
 	echo "CFLAGS=$CFLAGS $($PKG_CONFIG --cflags $DEPS)"
+	echo "GLSLANG=$GLSLANG"
 } >config.mk
 echo done

@@ -20,3 +20,9 @@ clean:
 	rm -f libblit.a $(OBJ)
 
 .PHONY: all clean
+
+# vulkan
+.SUFFIXES: .glsl .spv
+
+.glsl.spv:
+	$(GLSLANG) --target-env vulkan1.1 -o $@ $<
