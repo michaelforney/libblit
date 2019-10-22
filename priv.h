@@ -2,7 +2,7 @@
 
 #define LEN(a) (sizeof(a) / sizeof((a)[0]))
 
-void *reallocarray(void *, size_t, size_t);
+void *blt_reallocarray(void *, size_t, size_t);
 
 struct blt_context_impl {
 	struct blt_image *(*new_image)(struct blt_context *, int, int, uint32_t, int);
