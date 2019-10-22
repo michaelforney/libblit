@@ -16,3 +16,12 @@ struct blt_context_impl {
 struct blt_image_impl {
 	void (*destroy)(struct blt_image *);
 };
+
+struct blt_surface_impl {
+	struct blt_image *(*acquire)(struct blt_context *, struct blt_surface *, int *);
+	int (*present)(struct blt_context *, struct blt_surface *, struct blt_image *);
+};
+
+struct blt_surface {
+	const struct blt_surface_impl *impl;
+};

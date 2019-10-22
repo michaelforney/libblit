@@ -47,6 +47,12 @@ enum {
 struct blt_image *blt_new_image(struct blt_context *ctx, int x, int y, uint32_t format, int flags);
 struct blt_image *blt_new_solid(struct blt_context *ctx, const struct blt_color *color);
 
+/* surface */
+struct blt_surface;
+
+struct blt_image *blt_acquire(struct blt_context *ctx, struct blt_surface *srf, int *age);
+int blt_present(struct blt_context *ctx, struct blt_surface *srf, struct blt_image *img);
+
 /* rendering */
 enum blt_op {
 	BLT_OP_SRC,

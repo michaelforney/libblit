@@ -14,6 +14,18 @@ blt_new_solid(struct blt_context *ctx, const struct blt_color *color)
 	return ctx->impl->new_solid(ctx, color);
 }
 
+struct blt_image *
+blt_acquire(struct blt_context *ctx, struct blt_surface *srf, int *age)
+{
+	return srf->impl->acquire(ctx, srf, age);
+}
+
+int
+blt_present(struct blt_context *ctx, struct blt_surface *srf, struct blt_image *img)
+{
+	return srf->impl->present(ctx, srf, img);
+}
+
 int
 blt_setup(struct blt_context *ctx, int op,
           struct blt_image *dst, int dst_x, int dst_y,
