@@ -26,3 +26,12 @@ struct blt_surface_impl {
 struct blt_surface {
 	const struct blt_surface_impl *impl;
 };
+
+struct blt_solid {
+	struct blt_image base;
+	struct blt_color color;
+};
+
+extern const struct blt_image_impl blt_solid_image_impl;
+
+struct blt_image *blt_new_solid_image(struct blt_context *, const struct blt_color *);
