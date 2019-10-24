@@ -14,6 +14,18 @@ blt_new_solid(struct blt_context *ctx, const struct blt_color *color)
 	return ctx->impl->new_solid(ctx, color);
 }
 
+void
+blt_image_destroy(struct blt_context *ctx, struct blt_image *img)
+{
+	return img->impl->destroy(ctx, img);
+}
+
+void
+blt_surface_destroy(struct blt_context *ctx, struct blt_surface *srf)
+{
+	return srf->impl->destroy(ctx, srf);
+}
+
 struct blt_image *
 blt_acquire(struct blt_context *ctx, struct blt_surface *srf, int *age)
 {
