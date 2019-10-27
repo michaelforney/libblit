@@ -20,6 +20,8 @@ struct blt_context {
 	int op;
 	struct blt_image *dst, *src, *msk;
 	int dst_x, dst_y, src_x, src_y, msk_x, msk_y;
+	struct blt_x11 *x11;
+	struct blt_wl *wl;
 };
 
 /* misc types */

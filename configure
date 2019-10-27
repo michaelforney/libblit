@@ -9,20 +9,64 @@ fail() {
 	exit 1
 }
 
+PLATFORMS=auto
+BACKENDS=auto
+
 for arg; do
 	case "$arg" in
+	--with-platforms=*) PLATFORMS=${arg#*=} ;;
+	--with-backends=*) BACKENDS=${arg#*=} ;;
 	CC=*) CC=${arg#*=} ;;
 	CFLAGS=*) CFLAGS=${arg#*=} ;;
+	LDFLAGS=*) LDFLAGS=${arg#*=} ;;
+	LDLIBS=*) LDLIBS=${arg#*=} ;;
 	*) fail "unknown option '$arg'"
 	esac
 done
 
+if [ "$PLATFORMS" = auto ]; then
+	PLATFORMS=
+	$PKG_CONFIG --exists xcb && PLATFORMS="$PLATFORMS x11"
+	$PKG_CONFIG --exists wayland-client && PLATFORMS="$PLATFORMS wayland"
+fi
+
+if [ "$BACKENDS" = auto ]; then
+	BACKENDS=
+fi
+
+IFS=' ,'
+
 DEPS='pixman-1'
+
+WITH_WAYLAND=n
+WITH_X11=n
+for arg in $PLATFORMS; do
+	case "$arg" in
+	wayland)
+		WITH_WAYLAND=y
+		DEPS="$DEPS wayland-client"
+	;;
+	x11)
+		WITH_X11=y
+		DEPS="$DEPS xcb"
+	;;
+	*) fail "unknown platform '$arg'"
+	esac
+done
+
+for arg in $BACKENDS; do
+	case "$arg" in
+	*) fail "unknown platform '$arg'"
+	esac
+done
 
 printf 'creating config.mk...'
 {
 	echo "CC=$CC"
-	echo "CFLAGS=$CFLAGS $($PKG_CONFIG --cflags $DEPS)"
+	echo "CFLAGS+=$CFLAGS $($PKG_CONFIG --cflags $DEPS)"
+	echo "LDFLAGS+=$LDFLAGS $($PKG_CONFIG --libs-only-other $DEPS)"
 	echo "GLSLANG=$GLSLANG"
+	echo "WITH_X11=$WITH_X11"
+	echo "WITH_WAYLAND=$WITH_WAYLAND"
 } >config.mk
 echo done

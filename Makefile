@@ -1,25 +1,31 @@
 .POSIX:
+.PHONY: all clean
 
 all: libblit.a
 
 include config.mk
 
-CFLAGS+=-D _POSIX_C_SOURCE=200809L -I include
+CFLAGS-$(WITH_WAYLAND)+=-D WITH_WAYLAND
+CFLAGS-$(WITH_X11)+=-D WITH_X11
 
-OBJ=\
+CFLAGS+=-D _POSIX_C_SOURCE=200809L -I include $(CFLAGS-y)
+
+OBJ-y=\
 	blt.o\
+	solid.o\
 	damage.o\
 	util.o
+OBJ-$(WITH_WAYLAND)+=wl.o
+OBJ-$(WITH_X11)+=x11.o
 
-$(OBJ): include/blt.h priv.h
 
-libblit.a: $(OBJ)
-	$(AR) cr $@ $(OBJ)
+$(OBJ-y): include/blt.h include/blt-wl.h include/blt-x11.h priv.h
+
+libblit.a: $(OBJ-y)
+	$(AR) cr $@ $(OBJ-y)
 
 clean:
-	rm -f libblit.a $(OBJ)
-
-.PHONY: all clean
+	rm -f libblit.a $(OBJ-y) $(EXAMPLES-y)
 
 # vulkan
 .SUFFIXES: .glsl .spv
