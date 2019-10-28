@@ -32,6 +32,7 @@ fi
 
 if [ "$BACKENDS" = auto ]; then
 	BACKENDS=
+	$PKG_CONFIG --exists vulkan && BACKENDS="$BACKENDS vulkan"
 fi
 
 IFS=' ,'
@@ -54,8 +55,17 @@ for arg in $PLATFORMS; do
 	esac
 done
 
+WITH_VULKAN=n
+WITH_VULKAN_WAYLAND=n
+WITH_VULKAN_X11=n
 for arg in $BACKENDS; do
 	case "$arg" in
+	vulkan)
+		WITH_VULKAN=y
+		DEPS="$DEPS vulkan"
+		[ "$WITH_WAYLAND" = y ] && WITH_VULKAN_WAYLAND=y
+		[ "$WITH_X11" = y ] && WITH_VULKAN_X11=y
+	;;
 	*) fail "unknown platform '$arg'"
 	esac
 done
@@ -68,5 +78,8 @@ printf 'creating config.mk...'
 	echo "GLSLANG=$GLSLANG"
 	echo "WITH_X11=$WITH_X11"
 	echo "WITH_WAYLAND=$WITH_WAYLAND"
+	echo "WITH_VULKAN=$WITH_VULKAN"
+	echo "WITH_VULKAN_WAYLAND=$WITH_VULKAN_WAYLAND"
+	echo "WITH_VULKAN_X11=$WITH_VULKAN_X11"
 } >config.mk
 echo done

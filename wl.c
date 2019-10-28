@@ -3,10 +3,17 @@
 #include "priv.h"
 #include "wl.h"
 
+#ifdef WITH_VULKAN_WAYLAND
+struct blt_context *blt_vulkan_wl_new(struct wl_display *);
+#endif
+
 struct blt_context *
 blt_wl_new(struct wl_display *dpy)
 {
 	static struct blt_context *(*const impls[])(struct wl_display *) = {
+#ifdef WITH_VULKAN_WAYLAND
+		blt_vulkan_wl_new,
+#endif
 		0,
 	};
 	struct blt_context *ctx;

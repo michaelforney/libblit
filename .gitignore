@@ -1,3 +1,4 @@
 *.o
+*.inc
 /config.mk
 /libblit.a

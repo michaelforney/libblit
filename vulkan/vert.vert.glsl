@@ -6,7 +6,7 @@ layout(push_constant) uniform push {
 	layout(offset = 16) vec2 dst_scale;
 };
 
-layout(location = 0) in vec2 pos;
+layout(location = 0) in ivec2 pos;
 layout(location = 0) out vec2 src_pos;
 
 void main() {
