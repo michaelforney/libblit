@@ -14,12 +14,6 @@ blt_new_solid(struct blt_context *ctx, const struct blt_color *color)
 	return ctx->impl->new_solid(ctx, color);
 }
 
-void
-blt_image_destroy(struct blt_context *ctx, struct blt_image *img)
-{
-	return img->impl->destroy(ctx, img);
-}
-
 int
 blt_setup(struct blt_context *ctx, int op,
           struct blt_image *dst, int dst_x, int dst_y,
