@@ -49,9 +49,12 @@ enum {
 struct blt_image *blt_new_image(struct blt_context *ctx, int x, int y, uint32_t format, int flags);
 struct blt_image *blt_new_solid(struct blt_context *ctx, const struct blt_color *color);
 
+void blt_image_destroy(struct blt_context *ctx, struct blt_image *img);
+
 /* surface */
 struct blt_surface;
 
+void blt_surface_destroy(struct blt_context *ctx, struct blt_surface *srf);
 struct blt_image *blt_acquire(struct blt_context *ctx, struct blt_surface *srf, int *age);
 int blt_present(struct blt_context *ctx, struct blt_surface *srf, struct blt_image *img);
 
