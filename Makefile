@@ -24,7 +24,10 @@ OBJ-$(WITH_VULKAN)+=vulkan/impl.o
 OBJ-$(WITH_VULKAN_WAYLAND)+=vulkan/wl.o
 OBJ-$(WITH_VULKAN_X11)+=vulkan/x11.o
 
-$(OBJ-y): include/blt.h include/blt-wl.h include/blt-x11.h priv.h
+$(OBJ-y): include/blt.h priv.h
+wl.o vulkan/wl.o: include/blt-wl.h wl.h
+x11.o vulkan/x11.o: include/blt-x11.h x11.h
+vulkan/impl.o vulkan/wl.o vulkan/x11.o: vulkan/priv.h
 vulkan/impl.o: vulkan/vert.vert.inc vulkan/fill.frag.inc vulkan/copy.frag.inc
 
 libblit.a: $(OBJ-y)
