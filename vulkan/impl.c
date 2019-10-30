@@ -946,7 +946,7 @@ found:
 	}
 	if (i == family_len)
 		goto error5;
-	
+
 	res = vkCreateDevice(ctx->phys, &(VkDeviceCreateInfo){
 		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 		.queueCreateInfoCount = 1,
