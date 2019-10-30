@@ -16,6 +16,7 @@ CFLAGS+=-D _POSIX_C_SOURCE=200809L -I include $(CFLAGS-y)
 OBJ-y=\
 	blt.o\
 	damage.o\
+	drm.o\
 	image.o\
 	solid.o\
 	surface.o\
