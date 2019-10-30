@@ -1,9 +1,10 @@
 # libblit
 
 libblit is a small 2D graphics library. It aims to provide an API
-along the lines of the X11 render extension, Plan 9's libdraw, and Go's
-image/draw package. Another goal is to provide a common interface that
-can be used with a variety of windowing systems and rendering systems.
+along the lines of the [X11 render extension][x11-render], Plan
+9's [libdraw][plan9-libdraw], and Go's [image/draw][go-image/draw]
+package. Another goal is to provide a common interface that can be used
+with a variety of windowing systems and rendering systems.
 
 Here are some planned rendering and display mechanisms:
 
@@ -23,3 +24,14 @@ Here are some planned rendering and display mechanisms:
 
 libblit is currently in the design/experimentation phase, so none of
 the API is final and may change dramatically without notice.
+
+### Things to figure out
+
+- Importing/exporting buffers (DMA-BUF, SHM).
+- Synchronization, both internally and DRM syncobj for imported/exported
+  buffers.
+- Format modifier for image creation.
+
+[x11-render]: https://gitlab.freedesktop.org/xorg/proto/xorgproto/raw/master/renderproto.txt
+[plan9-libdraw]: http://man.cat-v.org/plan_9/2/draw
+[go-image/draw]: https://golang.org/pkg/image/draw/
