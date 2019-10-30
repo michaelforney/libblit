@@ -25,6 +25,11 @@ struct blt_context {
 };
 
 /* misc types */
+struct blt_userdata {
+	void (*destroy)(struct blt_userdata *);
+	struct blt_userdata *next;
+};
+
 struct blt_color {
 	uint16_t red;
 	uint16_t green;
@@ -35,6 +40,7 @@ struct blt_color {
 /* image */
 struct blt_image {
 	const struct blt_image_impl *impl;
+	struct blt_userdata *data;
 	int width, height;
 	uint32_t format;
 };
@@ -50,6 +56,8 @@ struct blt_image *blt_new_image(struct blt_context *ctx, int x, int y, uint32_t 
 struct blt_image *blt_new_solid(struct blt_context *ctx, const struct blt_color *color);
 
 void blt_image_destroy(struct blt_context *ctx, struct blt_image *img);
+void blt_image_add_userdata(struct blt_image *img, struct blt_userdata *data);
+struct blt_userdata *blt_image_get_userdata(struct blt_image *img, void destroy(struct blt_userdata *));
 
 /* surface */
 struct blt_surface;
