@@ -26,4 +26,4 @@ enum {
 };
 
 struct blt_context *blt_vulkan_new(int flags);
-struct blt_surface *blt_vulkan_new_surface(struct context *, VkSurfaceKHR, int, int);
+struct blt_surface *blt_vulkan_new_surface(struct context *, VkSurfaceKHR, int, int, uint32_t);

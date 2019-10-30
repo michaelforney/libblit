@@ -273,6 +273,18 @@ error0:
 	return -1;
 }
 
+static VkFormat
+vulkan_format(uint32_t format)
+{
+	switch (format) {
+	case BLT_FOURCC('X', 'R', '2', '4'):
+	case BLT_FOURCC('A', 'R', '2', '4'):
+		return VK_FORMAT_B8G8R8A8_UNORM;
+	default:
+		return VK_FORMAT_UNDEFINED;
+	}
+}
+
 static struct blt_image *
 new_image(struct blt_context *ctx_base, int width, int height, uint32_t format, int flags)
 {
@@ -295,14 +307,9 @@ new_image(struct blt_context *ctx_base, int width, int height, uint32_t format, 
 	VkMemoryRequirements reqs;
 	VkResult res;
 
-	switch (format) {
-	case BLT_FOURCC('X', 'R', '2', '4'):
-	case BLT_FOURCC('A', 'R', '2', '4'):
-		info.format = VK_FORMAT_B8G8R8A8_UNORM;
-		break;
-	default:
+	info.format = vulkan_format(format);
+	if (info.format == VK_FORMAT_UNDEFINED)
 		return NULL;
-	}
 
 	if (flags & BLT_IMAGE_DST)
 		info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -352,17 +359,53 @@ error0:
 }
 
 struct blt_surface *
-blt_vulkan_new_surface(struct context *ctx, VkSurfaceKHR vk, int width, int height)
+blt_vulkan_new_surface(struct context *ctx, VkSurfaceKHR vk, int width, int height, uint32_t format)
 {
 	struct surface *srf;
 	VkSurfaceCapabilitiesKHR caps;
 	VkImage *vkimg;
 	VkResult res;
+	VkSurfaceFormatKHR *formats;
+	uint32_t formats_len;
+	VkSwapchainCreateInfoKHR info = {
+		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+		.surface = vk,
+		.imageArrayLayers = 1,
+		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+		.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+		.presentMode = VK_PRESENT_MODE_FIFO_KHR,
+		.clipped = VK_TRUE,
+	};
 	int i;
 	VkBool32 supported;
 
 	res = vkGetPhysicalDeviceSurfaceSupportKHR(ctx->phys, ctx->queue_index, vk, &supported);
 	if (res != VK_SUCCESS || !supported)
+		goto error0;
+	info.imageFormat = vulkan_format(format);
+	if (info.imageFormat == VK_FORMAT_UNDEFINED)
+		goto error0;
+	res = vkGetPhysicalDeviceSurfaceFormatsKHR(ctx->phys, vk, &formats_len, NULL);
+	if (res != VK_SUCCESS)
+		goto error0;
+	formats = blt_reallocarray(NULL, formats_len, sizeof(formats[0]));
+	if (!formats)
+		goto error0;
+	res = vkGetPhysicalDeviceSurfaceFormatsKHR(ctx->phys, vk, &formats_len, formats);
+	if (res != VK_SUCCESS) {
+		free(formats);
+		goto error0;
+	}
+	for (i = 0; i < formats_len; ++i) {
+		if (formats[i].format == info.imageFormat) {
+			info.imageColorSpace = formats[i].colorSpace;
+			break;
+		}
+	}
+	free(formats);
+	if (i == formats_len)
 		goto error0;
 	/* XXX: check for surface formats */
 	srf = malloc(sizeof(*srf));
@@ -383,21 +426,9 @@ blt_vulkan_new_surface(struct context *ctx, VkSurfaceKHR vk, int width, int heig
 			goto error1;
 		caps.currentExtent.height = height;
 	}
-	res = vkCreateSwapchainKHR(ctx->dev, &(VkSwapchainCreateInfoKHR){
-		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-		.surface = vk,
-		.minImageCount = caps.minImageCount,
-		.imageFormat = VK_FORMAT_B8G8R8A8_UNORM,
-		.imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR,
-		.imageExtent = caps.currentExtent,
-		.imageArrayLayers = 1,
-		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-		.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-		.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-		.presentMode = VK_PRESENT_MODE_MAILBOX_KHR,
-		.clipped = VK_TRUE,
-	}, NULL, &srf->swapchain);
+	info.imageExtent = caps.currentExtent;
+	info.minImageCount = caps.minImageCount;
+	res = vkCreateSwapchainKHR(ctx->dev, &info, NULL, &srf->swapchain);
 	if (res != VK_SUCCESS)
 		goto error1;
 	res = vkGetSwapchainImagesKHR(ctx->dev, srf->swapchain, &srf->img_len, NULL);
