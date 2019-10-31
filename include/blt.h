@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define BLT_FOURCC(a, b, c, d) ((uint32_t)(a) | (uint32_t)(b) << 8 | (uint32_t)(c) << 16 | (uint32_t)(d) << 24)
+#define BLT_FMT(a, b, c, d) ((uint32_t)(a) | (uint32_t)(b) << 8 | (uint32_t)(c) << 16 | (uint32_t)(d) << 24)
 
 struct pixman_region32;
 struct pixman_box32;

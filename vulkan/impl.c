@@ -277,8 +277,8 @@ static VkFormat
 vulkan_format(uint32_t format)
 {
 	switch (format) {
-	case BLT_FOURCC('X', 'R', '2', '4'):
-	case BLT_FOURCC('A', 'R', '2', '4'):
+	case BLT_FMT('X', 'R', '2', '4'):
+	case BLT_FMT('A', 'R', '2', '4'):
 		return VK_FORMAT_B8G8R8A8_UNORM;
 	default:
 		return VK_FORMAT_UNDEFINED;
@@ -452,7 +452,7 @@ blt_vulkan_new_surface(struct context *ctx, VkSurfaceKHR vk, int width, int heig
 			.impl = &image_impl,
 			.width = caps.currentExtent.width,
 			.height = caps.currentExtent.height,
-			.format = BLT_FOURCC('X', 'R', '2', '4'),
+			.format = BLT_FMT('X', 'R', '2', '4'),
 		};
 		srf->img[i].vk = vkimg[i];
 		if (init_image(ctx, &srf->img[i], VK_FORMAT_B8G8R8A8_UNORM, BLT_IMAGE_DST) < 0)
@@ -582,8 +582,8 @@ setup(struct blt_context *ctx_base, int op, struct blt_image *dst_base, struct b
 			struct image *src = (void *)src_base;
 
 			switch (src_base->format) {
-			case BLT_FOURCC('X', 'R', '2', '4'):
-			case BLT_FOURCC('A', 'R', '2', '4'):
+			case BLT_FMT('X', 'R', '2', '4'):
+			case BLT_FMT('A', 'R', '2', '4'):
 				pipeline = &ctx->copy_rgb_pipeline;
 				break;
 			default:

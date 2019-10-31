@@ -27,7 +27,7 @@ new_surface(struct blt_context *ctx_base, struct wl_surface *wlsrf, int width, i
 	}, NULL, &vksrf);
 	if (res != VK_SUCCESS)
 		goto error0;
-	srf = blt_vulkan_new_surface(ctx, vksrf, width, height, BLT_FOURCC('X', 'R', '2', '4'));
+	srf = blt_vulkan_new_surface(ctx, vksrf, width, height, BLT_FMT('X', 'R', '2', '4'));
 	if (!srf)
 		goto error1;
 
