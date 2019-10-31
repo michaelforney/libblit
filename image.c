@@ -28,7 +28,7 @@ blt_image_get_userdata(struct blt_image *img, void destroy(struct blt_userdata *
 
 	for (data = img->data; data; data = data->next) {
 		if (data->destroy == destroy)
-			break;
+			return data;
 	}
 	return NULL;
 }
