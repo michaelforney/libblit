@@ -4,6 +4,13 @@
 void
 blt_image_destroy(struct blt_context *ctx, struct blt_image *img)
 {
+	struct blt_userdata *data;
+
+	while (img->data) {
+		data = img->data;
+		img->data = data->next;
+		data->destroy(data);
+	}
 	img->impl->destroy(ctx, img);
 }
 
