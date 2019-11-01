@@ -1,0 +1,39 @@
+.Dd October 30, 2019
+.Dt BLT_X11_NEW 3
+.Os
+.Sh NAME
+.Nm blt_x11_new ,
+.Nm blt_x11_new_surface
+.Nd libblit X11 platform
+.Sh SYNOPSIS
+.In blt.h
+.In blt-x11.h
+.Ft struct blt_context *
+.Fn blt_x11_new "xcb_connection_t *conn"
+.Ft struct blt_surface *
+.Fn blt_x11_new_surface "struct blt_context *ctx" "xcb_window_t win"
+.Sh DESCRIPTION
+The
+.Fn blt_x11_new
+function creates a new libblit context for an X11 connection.
+.Pp
+The
+.Fn blt_x11_new_surface
+function creates a new libblit surface corresponding to an X11 window.
+.Fa ctx
+must have been created with
+.Fn blt_x11_new .
+.Sh RETURN VALUES
+.Fn blt_x11_new
+returns a new
+.Ft struct blt_context
+on success, or
+.Dv NULL
+on failure.
+.Pp
+.Fn blt_x11_new_surface
+returns a new
+.Ft struct blt_surface
+on success, or
+.Dv NULL
+on failure.

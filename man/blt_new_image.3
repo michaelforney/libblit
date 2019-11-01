@@ -1,0 +1,24 @@
+.Dd October 30, 2019
+.Dt BLT_NEW_IMAGE 3
+.Os
+.Sh NAME
+.Nm blt_new_image
+.Nd create new libblit image
+.Sh SYNOPSIS
+.In blt.h
+.Ft struct blt_image *
+.Fn blt_new_image "struct blt_context *ctx" "int width" "int height" "uint32_t format" "int flags"
+.Sh DESCRIPTION
+This function creates a new image with the given width, height, format.
+Any use of the image must be declared up front as a combination of the following flags:
+.Pp
+.Bl -tag -width BLT_IMAGE_SRC -offset indent -compact
+.It Dv BLT_IMAGE_DST
+Image can be used as a destination for a rendering operation.
+.It Dv BLT_IMAGE_SRC
+Image can be used as a source for a rendering operation.
+.El
+.Sh RETURN VALUES
+This function returns the created image, or
+.Dv NULL
+on failure.

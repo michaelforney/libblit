@@ -1,0 +1,20 @@
+.Dd October 30, 2019
+.Dt BLT_DRM_NEW 3
+.Os
+.Sh NAME
+.Nm blt_drm_new
+.Nd create libblit context from DRM device fd
+.Sh SYNOPSIS
+.In blt-drm.h
+.Ft struct blt_context *
+.Fn blt_drm_new "int fd"
+.Sh DESCRIPTION
+This function creates a new libblit context given a DRM device file descriptor.
+The resulting context is required to support import and export operations
+to and from DMA-BUF file descriptors.
+.Sh RETURN VALUES
+This function returns a new
+.Ft struct blt_context
+on success, or
+.Dv NULL
+on failure.

@@ -1,0 +1,49 @@
+.Dd October 31, 2019
+.Dt BLT_DAMAGE_NEW 3
+.Os
+.Sh NAME
+.Nm blt_damage_new ,
+.Nm blt_blt_damage ,
+.Nm blt_cycle_damage
+.Nd libblit damage tracking
+.Sh SYNOPSIS
+.In blt.h
+.Ft struct blt_damage *
+.Fn blt_new_damage "int max_age"
+.Ft struct pixman_region32 *
+.Fn blt_damage "struct blt_damage *dmg" "int age" "struct pixman_region32 *new"
+.Ft void
+.Fn blt_cycle_damage "struct blt_damage *dmg"
+.Sh DESCRIPTION
+The
+.Fn blt_new_damage
+function creates a new damage tracker, which tracks the damaged regions of
+.Fa max_age
+images.
+Internally, this is represented as an array of
+.Vt struct pixman_region32 .
+Initially, all damaged regions consist of a rectangle with infinite extents.
+.Pp
+The
+.Fn blt_damage
+function returns the damaged region for the image with the given
+.Fa age ,
+after optionally adding more damage to all regions if
+.Fa dmg
+is not
+.Dv NULL .
+.Pp
+The
+.Fn blt_cycle_damage
+funtion clears the damage of the oldest image, and makes it the newest image.
+.Sh RETURN VALUES
+.Fn blt_new_damage
+returns the new
+.Ft struct blt_damage
+on success, or
+.Dv NULL
+on failure.
+.Pp
+.Fn blt_damage
+returns the damaged region for the image with the given
+.Fa age .
