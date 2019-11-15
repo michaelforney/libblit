@@ -9,8 +9,10 @@ fail() {
 	exit 1
 }
 
+IFS=' ,'
 PLATFORMS=auto
 BACKENDS=auto
+DEPS='pixman-1'
 
 for arg; do
 	case "$arg" in
@@ -24,23 +26,16 @@ for arg; do
 	esac
 done
 
+# platform detection
+WITH_WAYLAND=n
+WITH_X11=n
+
 if [ "$PLATFORMS" = auto ]; then
 	PLATFORMS=
 	$PKG_CONFIG --exists xcb && PLATFORMS="$PLATFORMS x11"
 	$PKG_CONFIG --exists wayland-client && PLATFORMS="$PLATFORMS wayland"
 fi
 
-if [ "$BACKENDS" = auto ]; then
-	BACKENDS=
-	$PKG_CONFIG --exists vulkan && BACKENDS="$BACKENDS vulkan"
-fi
-
-IFS=' ,'
-
-DEPS='pixman-1'
-
-WITH_WAYLAND=n
-WITH_X11=n
 for arg in $PLATFORMS; do
 	case "$arg" in
 	wayland)
@@ -55,9 +50,18 @@ for arg in $PLATFORMS; do
 	esac
 done
 
+# backend detection
+WITH_DRM_WAYLAND=n
+WITH_DRM_X11=n
 WITH_VULKAN=n
 WITH_VULKAN_WAYLAND=n
 WITH_VULKAN_X11=n
+
+if [ "$BACKENDS" = auto ]; then
+	BACKENDS=
+	$PKG_CONFIG --exists vulkan && BACKENDS="$BACKENDS vulkan"
+fi
+
 for arg in $BACKENDS; do
 	case "$arg" in
 	vulkan)
