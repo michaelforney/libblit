@@ -2,7 +2,10 @@
 
 : ${CC:=cc}
 : ${GLSLANG:=glslangValidator}
+: ${LLVM_MC:=llvm-mc}
+: ${LLVM_OBJCOPY:=llvm-objcopy}
 : ${PKG_CONFIG:=pkg-config}
+: ${PYTHON:=python}
 
 fail() {
 	echo "$0: $*" >&2
@@ -51,6 +54,7 @@ for arg in $PLATFORMS; do
 done
 
 # backend detection
+WITH_AMDGPU=n
 WITH_DRM_WAYLAND=n
 WITH_DRM_X11=n
 WITH_VULKAN=n
@@ -60,10 +64,17 @@ WITH_VULKAN_X11=n
 if [ "$BACKENDS" = auto ]; then
 	BACKENDS=
 	$PKG_CONFIG --exists vulkan && BACKENDS="$BACKENDS vulkan"
+	$PKG_CONFIG --exists libdrm_amdgpu && BACKENDS="$BACKENDS amdgpu"
 fi
 
 for arg in $BACKENDS; do
 	case "$arg" in
+	amdgpu)
+		WITH_AMDGPU=y
+		DEPS="$DEPS libdrm_amdgpu"
+		[ "$WITH_WAYLAND" = y ] && WITH_DRM_WAYLAND=y
+		[ "$WITH_X11" = y ] && WITH_DRM_X11=y
+	;;
 	vulkan)
 		WITH_VULKAN=y
 		DEPS="$DEPS vulkan"
@@ -74,15 +85,23 @@ for arg in $BACKENDS; do
 	esac
 done
 
+if [ "$WITH_DRM_X11" = y ]; then
+	DEPS="$DEPS xcb-dri3 xcb-present"
+fi
+
 printf 'creating config.mk...'
 cat >config.mk <<EOF
 CC=$CC
 CFLAGS+=$CFLAGS $($PKG_CONFIG --cflags $DEPS)
 LDFLAGS+=$LDFLAGS $($PKG_CONFIG --libs-only-other $DEPS)
 GLSLANG=$GLSLANG
+LLVM_MC=$LLVM_MC
+LLVM_OBJCOPY=$LLVM_OBJCOPY
+PYTHON=$PYTHON
 
 WITH_WAYLAND=$WITH_WAYLAND
 WITH_X11=$WITH_X11
+WITH_AMDGPU=$WITH_AMDGPU
 WITH_VULKAN=$WITH_VULKAN
 WITH_VULKAN_WAYLAND=$WITH_VULKAN_WAYLAND
 WITH_VULKAN_X11=$WITH_VULKAN_X11

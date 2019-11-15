@@ -1,4 +1,5 @@
 *.o
-*.inc
+/amdgpu/*.bin
+/vulkan/*.inc
 /config.mk
 /libblit.a
