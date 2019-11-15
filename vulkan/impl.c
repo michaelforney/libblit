@@ -52,7 +52,6 @@ static const uint32_t copy_spv[] = {
 static void
 image_destroy(struct blt_context *ctx_base, struct blt_image *img_base)
 {
-	struct context *ctx = (void *)ctx_base;
 	struct image *img = (void *)img_base;
 
 	free(img);
@@ -65,7 +64,6 @@ static const struct blt_image_impl image_impl = {
 static void
 surface_destroy(struct blt_context *ctx_base, struct blt_surface *srf_base)
 {
-	struct context *ctx = (void *)ctx_base;
 	struct surface *srf = (void *)srf_base;
 
 	free(srf->img);
@@ -864,13 +862,6 @@ blt_vulkan_new(int flags)
 	VkResult res;
 	const char *ext[4];
 	VkPhysicalDevice *phys;
-	VkPhysicalDevicePCIBusInfoPropertiesEXT pci_prop = {
-		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT,
-	};
-	VkPhysicalDeviceProperties2 phys_prop = {
-		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
-		.pNext = &pci_prop,
-	};
 	VkExtensionProperties *ext_prop = NULL;
 	VkQueueFamilyProperties *family;
 	uint32_t i, j, ext_len, phys_len, ext_prop_len, family_len;
