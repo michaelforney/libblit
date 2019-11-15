@@ -67,7 +67,7 @@ amdgpu/copy-gfx10.bin: amdgpu/copy-gfx10.s
 
 amdgpu/impl.o: amdgpu/vert-gfx10.inc amdgpu/fill-gfx10.inc amdgpu/copy-gfx10.inc
 
-CFLAGS+=-D _POSIX_C_SOURCE=200809L -I include $(CFLAGS-y)
+CFLAGS+=-Wall -pedantic -D _POSIX_C_SOURCE=200809L -I include $(CFLAGS-y)
 
 $(OBJ-y): include/blt.h priv.h
 wl.o vulkan/wl.o: include/blt-wl.h wl.h
