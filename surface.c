@@ -4,7 +4,7 @@
 void
 blt_surface_destroy(struct blt_context *ctx, struct blt_surface *srf)
 {
-	return srf->impl->destroy(ctx, srf);
+	srf->impl->destroy(ctx, srf);
 }
 
 struct blt_image *
