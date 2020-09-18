@@ -47,8 +47,11 @@ OBJ-$(WITH_AMDGPU)+=amdgpu/impl.o
 
 AMDGPU_ASSEMBLE=$(LLVM_MC) --arch=amdgcn --mcpu=gfx1010 --assemble --filetype=obj $< | $(LLVM_OBJCOPY) -j .text -O binary - $@
 AMDGPU_JSON=\
-	amdgpu/amdgfxregs.json\
+	amdgpu/registers-manually-defined.json\
 	amdgpu/pkt3.json\
+	amdgpu/gfx6.json\
+	amdgpu/gfx8.json\
+	amdgpu/gfx9.json\
 	amdgpu/gfx10.json\
 	amdgpu/gfx10-rsrc.json
 
@@ -65,7 +68,7 @@ amdgpu/fill-gfx10.bin: amdgpu/fill-gfx10.s
 amdgpu/copy-gfx10.bin: amdgpu/copy-gfx10.s
 	$(AMDGPU_ASSEMBLE)
 
-amdgpu/impl.o: amdgpu/vert-gfx10.inc amdgpu/fill-gfx10.inc amdgpu/copy-gfx10.inc
+amdgpu/impl.o: amdgpu/vert-gfx10.inc amdgpu/fill-gfx10.inc amdgpu/copy-gfx10.inc amdgpu/amd_family.h amdgpu/sid.h amdgpu/amdgfxregs.h
 
 CFLAGS+=-Wall -pedantic -D _POSIX_C_SOURCE=200809L -I include $(CFLAGS-y)
 
