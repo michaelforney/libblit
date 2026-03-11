@@ -18,6 +18,9 @@ struct context {
 	VkShaderModule vert_shader, fill_shader, copy_shader;
 	struct pipeline fill_pipeline, copy_rgb_pipeline;
 	VkSampler rgb_sampler;
+
+	PFN_vkGetMemoryFdKHR get_memory_fd;
+	PFN_vkGetImageDrmFormatModifierPropertiesEXT get_image_drm_format_modifier_properties;
 };
 
 enum {

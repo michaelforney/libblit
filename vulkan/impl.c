@@ -57,8 +57,42 @@ image_destroy(struct blt_context *ctx_base, struct blt_image *img_base)
 	free(img);
 }
 
+static int
+image_export_dmabuf(struct blt_context *ctx_base, struct blt_image *img_base, struct blt_plane plane[static 4], uint64_t *mod)
+{
+	struct context *ctx = (void *)ctx_base;
+	struct image *img = (void *)img_base;
+	VkResult res;
+	VkSubresourceLayout layout;
+	VkImageDrmFormatModifierPropertiesEXT props = {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_PROPERTIES_EXT,
+	};
+
+	res = ctx->get_memory_fd(ctx->dev, &(VkMemoryGetFdInfoKHR){
+		.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR,
+		.memory = img->memory,
+		.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+	}, &plane[0].fd);
+	if (res != VK_SUCCESS)
+		return -1;
+	res = ctx->get_image_drm_format_modifier_properties(ctx->dev, img->vk, &props);
+	if (res != VK_SUCCESS)
+		return -1;
+	*mod = props.drmFormatModifier;
+	vkGetImageSubresourceLayout(ctx->dev, img->vk, &(VkImageSubresource){
+		.aspectMask = VK_IMAGE_ASPECT_PLANE_0_BIT,
+	}, &layout);
+	plane[0].offset = layout.offset;
+	plane[0].stride = layout.rowPitch;
+	plane[1] = (struct blt_plane){.fd = -1};
+	plane[2] = (struct blt_plane){.fd = -1};
+	plane[3] = (struct blt_plane){.fd = -1};
+	return 1;
+}
+
 static const struct blt_image_impl image_impl = {
 	.destroy = image_destroy,
+	.export_dmabuf = image_export_dmabuf,
 };
 
 static void
@@ -952,6 +986,9 @@ found:
 	}, NULL, &ctx->dev);
 	if (res != VK_SUCCESS)
 		goto error5;
+
+	ctx->get_memory_fd = (PFN_vkGetMemoryFdKHR)vkGetDeviceProcAddr(ctx->dev, "vkGetMemoryFdKHR");
+	ctx->get_image_drm_format_modifier_properties = (PFN_vkGetImageDrmFormatModifierPropertiesEXT)vkGetDeviceProcAddr(ctx->dev, "vkGetImageDrmFormatModifierPropertiesEXT");
 
 	vkGetDeviceQueue(ctx->dev, ctx->queue_index, 0, &ctx->queue);
 	res = vkCreateShaderModule(ctx->dev, &(VkShaderModuleCreateInfo){

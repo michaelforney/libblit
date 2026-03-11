@@ -14,6 +14,7 @@ struct blt_context_impl {
 
 struct blt_image_impl {
 	void (*destroy)(struct blt_context *, struct blt_image *);
+	int (*export_dmabuf)(struct blt_context *, struct blt_image *, struct blt_plane[static 4], uint64_t *mod);
 };
 
 struct blt_surface_impl {

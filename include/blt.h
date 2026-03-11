@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #define BLT_FMT(a, b, c, d) ((uint32_t)(a) | (uint32_t)(b) << 8 | (uint32_t)(c) << 16 | (uint32_t)(d) << 24)
+#define BLT_MOD_INVALID (1ull << 56 - 1)
 
 /* damage */
 struct blt_damage *blt_new_damage(int max);
@@ -47,11 +48,19 @@ struct blt_image {
 	uint32_t format;
 };
 
+struct blt_plane {
+	int fd;
+	uint32_t stride;
+	uint32_t offset;
+};
+
 enum {
 	/* image can be used as a destination */
 	BLT_IMAGE_DST = 1<<0,
 	/* image can be used as a source */
 	BLT_IMAGE_SRC = 1<<1,
+	/* image can be attached to a framebuffer and scanned out */
+	BLT_IMAGE_SCANOUT = 1<<2,
 };
 
 struct blt_image *blt_new_image(struct blt_context *ctx, int x, int y, uint32_t format, int flags);
@@ -60,6 +69,7 @@ struct blt_image *blt_new_solid(struct blt_context *ctx, struct blt_color color)
 void blt_image_destroy(struct blt_context *ctx, struct blt_image *img);
 void blt_image_add_userdata(struct blt_image *img, struct blt_userdata *data);
 struct blt_userdata *blt_image_get_userdata(struct blt_image *img, void destroy(struct blt_userdata *));
+int blt_image_export_dmabuf(struct blt_context *ctx, struct blt_image *img, struct blt_plane plane[static 4], uint64_t *mod);
 
 /* surface */
 struct blt_surface;

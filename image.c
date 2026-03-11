@@ -32,3 +32,9 @@ blt_image_get_userdata(struct blt_image *img, void destroy(struct blt_userdata *
 	}
 	return NULL;
 }
+
+int
+blt_image_export_dmabuf(struct blt_context *ctx, struct blt_image *img, struct blt_plane plane[static 4], uint64_t *mod)
+{
+	return img->impl->export_dmabuf(ctx, img, plane, mod);
+}

@@ -292,8 +292,29 @@ image_destroy(struct blt_context *ctx, struct blt_image *img)
 {
 }
 
+static int
+export_dmabuf(struct blt_context *ctx_base, struct blt_image *img_base, struct blt_plane plane[static 4], uint64_t *mod)
+{
+	struct image *img = (void *)img_base;
+	uint32_t u32;
+	int ret;
+
+	ret = amdgpu_bo_export(img->bo.handle, amdgpu_bo_handle_type_dma_buf_fd, &u32);
+	if (ret < 0)
+		return ret;
+	plane[0] = (struct blt_plane){.fd = u32, .stride = img->stride};
+	plane[1] = (struct blt_plane){.fd = -1};
+	plane[2] = (struct blt_plane){.fd = -1};
+	plane[3] = (struct blt_plane){.fd = -1};
+	/* TODO: amdgpu format modifiers */
+	*mod = DRM_FORMAT_MOD_INVALID;
+
+	return 1;
+}
+
 static const struct blt_image_impl image_impl = {
 	.destroy = image_destroy,
+	.export_dmabuf = export_dmabuf,
 };
 
 /*
