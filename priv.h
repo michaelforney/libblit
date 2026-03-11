@@ -9,8 +9,7 @@ struct blt_context_impl {
 	struct blt_image *(*new_solid)(struct blt_context *, const struct blt_color *);
 
 	int (*setup)(struct blt_context *, int, struct blt_image *, struct blt_image *, struct blt_image *);
-	int (*rect)(struct blt_context *, size_t, const struct pixman_box32 *);
-	int (*region)(struct blt_context *, struct pixman_region32 *);
+	int (*rect)(struct blt_context *, size_t, const struct blt_rect *);
 };
 
 struct blt_image_impl {

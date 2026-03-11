@@ -890,19 +890,19 @@ setup(struct blt_context *ctx_base, int op, struct blt_image *dst_base, struct b
 }
 
 static int
-rect(struct blt_context *ctx_base, size_t len, const struct pixman_box32 *rect)
+rect(struct blt_context *ctx_base, size_t len, const struct blt_rect *rect)
 {
 	struct context *ctx = (void *)ctx_base;
 	struct image *dst = (void *)ctx->base.dst;
 	struct vertbuf *vert = &dst->draw->vert;
 
 	for (; len; --len) {
-		vert->buf[vert->len++] = rect->x1;
+		vert->buf[vert->len++] = rect->x0;
+		vert->buf[vert->len++] = rect->y0;
+		vert->buf[vert->len++] = rect->x0;
 		vert->buf[vert->len++] = rect->y1;
 		vert->buf[vert->len++] = rect->x1;
-		vert->buf[vert->len++] = rect->y2;
-		vert->buf[vert->len++] = rect->x2;
-		vert->buf[vert->len++] = rect->y1;
+		vert->buf[vert->len++] = rect->y0;
 	}
 
 	return 0;

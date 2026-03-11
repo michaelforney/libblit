@@ -77,17 +77,7 @@ blt_mask(struct blt_context *ctx, struct blt_image *msk, int x, int y)
 }
 
 int
-blt_rect(struct blt_context *ctx, size_t len, const struct pixman_box32 *rect)
+blt_rect(struct blt_context *ctx, size_t len, const struct blt_rect *rect)
 {
 	return ctx->impl->rect(ctx, len, rect);
-}
-
-int
-blt_region(struct blt_context *ctx, struct pixman_region32 *region)
-{
-	int len;
-	struct pixman_box32 *box;
-
-	box = pixman_region32_rectangles(region, &len);
-	return blt_rect(ctx, len, box);
 }

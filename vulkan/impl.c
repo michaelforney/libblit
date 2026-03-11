@@ -621,7 +621,7 @@ setup(struct blt_context *ctx_base, int op, struct blt_image *dst_base, struct b
 }
 
 static int
-rect(struct blt_context *ctx_base, size_t len, const struct pixman_box32 *rect)
+rect(struct blt_context *ctx_base, size_t len, const struct blt_rect *rect)
 {
 	struct context *ctx = (void *)ctx_base;
 	struct image *img = (void *)ctx->base.dst;
@@ -629,18 +629,18 @@ rect(struct blt_context *ctx_base, size_t len, const struct pixman_box32 *rect)
 
 	if (dc->vertex_cap - dc->vertex_len < 12)
 		flush(ctx);
+	dc->vertex[dc->vertex_len++] = rect->x0;
+	dc->vertex[dc->vertex_len++] = rect->y0;
+	dc->vertex[dc->vertex_len++] = rect->x1;
+	dc->vertex[dc->vertex_len++] = rect->y0;
 	dc->vertex[dc->vertex_len++] = rect->x1;
 	dc->vertex[dc->vertex_len++] = rect->y1;
-	dc->vertex[dc->vertex_len++] = rect->x2;
-	dc->vertex[dc->vertex_len++] = rect->y1;
-	dc->vertex[dc->vertex_len++] = rect->x2;
-	dc->vertex[dc->vertex_len++] = rect->y2;
-	dc->vertex[dc->vertex_len++] = rect->x2;
-	dc->vertex[dc->vertex_len++] = rect->y2;
-	dc->vertex[dc->vertex_len++] = rect->x1;
-	dc->vertex[dc->vertex_len++] = rect->y2;
 	dc->vertex[dc->vertex_len++] = rect->x1;
 	dc->vertex[dc->vertex_len++] = rect->y1;
+	dc->vertex[dc->vertex_len++] = rect->x0;
+	dc->vertex[dc->vertex_len++] = rect->y1;
+	dc->vertex[dc->vertex_len++] = rect->x0;
+	dc->vertex[dc->vertex_len++] = rect->y0;
 	return 0;
 }
 

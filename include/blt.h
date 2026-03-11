@@ -6,9 +6,6 @@
 
 #define BLT_FMT(a, b, c, d) ((uint32_t)(a) | (uint32_t)(b) << 8 | (uint32_t)(c) << 16 | (uint32_t)(d) << 24)
 
-struct pixman_region32;
-struct pixman_box32;
-
 /* damage */
 struct blt_damage *blt_new_damage(int max);
 struct pixman_region32 *blt_damage(struct blt_damage *dmg, int age, struct pixman_region32 *new);
@@ -25,6 +22,11 @@ struct blt_context {
 };
 
 /* misc types */
+struct blt_rect {
+	int x0, y0;
+	int x1, y1;
+};
+
 struct blt_userdata {
 	void (*destroy)(struct blt_userdata *);
 	struct blt_userdata *next;
@@ -80,7 +82,6 @@ int blt_src(struct blt_context *ctx, struct blt_image *src, int src_x, int src_y
 int blt_dst(struct blt_context *ctx, struct blt_image *dst, int dst_x, int dst_y);
 int blt_msk(struct blt_context *ctx, struct blt_image *msk, int msk_x, int msk_y);
 
-int blt_rect(struct blt_context *ctx, size_t len, const struct pixman_box32 *rect);
-int blt_region(struct blt_context *ctx, struct pixman_region32 *region);
+int blt_rect(struct blt_context *ctx, size_t len, const struct blt_rect *rect);
 
 #endif
