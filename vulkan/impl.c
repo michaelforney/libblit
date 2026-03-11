@@ -320,7 +320,7 @@ vulkan_format(uint32_t format)
 static struct blt_image *
 new_image(struct blt_context *ctx_base, int width, int height, uint32_t format, int flags)
 {
-	struct context *ctx = (void *)ctx;
+	struct context *ctx = (void *)ctx_base;
 	struct image *img;
 	VkImageCreateInfo info = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
