@@ -9,7 +9,7 @@ blt_new_image(struct blt_context *ctx, int width, int height, uint32_t format, i
 }
 
 struct blt_image *
-blt_new_solid(struct blt_context *ctx, const struct blt_color *color)
+blt_new_solid(struct blt_context *ctx, struct blt_color color)
 {
 	return ctx->impl->new_solid(ctx, color);
 }

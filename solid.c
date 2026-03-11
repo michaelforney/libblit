@@ -14,7 +14,7 @@ const struct blt_image_impl blt_solid_image_impl = {
 };
 
 struct blt_image *
-blt_new_solid_image(struct blt_context *ctx, const struct blt_color *color)
+blt_new_solid_image(struct blt_context *ctx, struct blt_color color)
 {
 	struct blt_solid *img;
 
@@ -26,6 +26,6 @@ blt_new_solid_image(struct blt_context *ctx, const struct blt_color *color)
 		.width = INT_MAX,
 		.height = INT_MAX,
 	};
-	img->color = *color;
+	img->color = color;
 	return &img->base;
 }

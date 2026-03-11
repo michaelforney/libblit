@@ -6,7 +6,7 @@ void *blt_reallocarray(void *, size_t, size_t);
 
 struct blt_context_impl {
 	struct blt_image *(*new_image)(struct blt_context *, int, int, uint32_t, int);
-	struct blt_image *(*new_solid)(struct blt_context *, const struct blt_color *);
+	struct blt_image *(*new_solid)(struct blt_context *, struct blt_color);
 
 	int (*setup)(struct blt_context *, int, struct blt_image *, struct blt_image *, struct blt_image *);
 	int (*rect)(struct blt_context *, size_t, const struct blt_rect *);
@@ -33,4 +33,4 @@ struct blt_solid {
 
 extern const struct blt_image_impl blt_solid_image_impl;
 
-struct blt_image *blt_new_solid_image(struct blt_context *, const struct blt_color *);
+struct blt_image *blt_new_solid_image(struct blt_context *, struct blt_color);
