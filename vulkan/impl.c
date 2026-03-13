@@ -679,20 +679,22 @@ rect(struct blt_context *ctx_base, size_t len, const struct blt_rect *rect)
 	struct image *img = (void *)ctx->base.dst;
 	struct draw_context *dc = img->draw_ctx;
 
-	if (dc->vertex_cap - dc->vertex_len < 12)
-		flush(ctx);
-	dc->vertex[dc->vertex_len++] = rect->x0;
-	dc->vertex[dc->vertex_len++] = rect->y0;
-	dc->vertex[dc->vertex_len++] = rect->x1;
-	dc->vertex[dc->vertex_len++] = rect->y0;
-	dc->vertex[dc->vertex_len++] = rect->x1;
-	dc->vertex[dc->vertex_len++] = rect->y1;
-	dc->vertex[dc->vertex_len++] = rect->x1;
-	dc->vertex[dc->vertex_len++] = rect->y1;
-	dc->vertex[dc->vertex_len++] = rect->x0;
-	dc->vertex[dc->vertex_len++] = rect->y1;
-	dc->vertex[dc->vertex_len++] = rect->x0;
-	dc->vertex[dc->vertex_len++] = rect->y0;
+	for (; len > 0; --len, ++rect) {
+		if (dc->vertex_cap - dc->vertex_len < 12)
+			flush(ctx);
+		dc->vertex[dc->vertex_len++] = rect->x0;
+		dc->vertex[dc->vertex_len++] = rect->y0;
+		dc->vertex[dc->vertex_len++] = rect->x1;
+		dc->vertex[dc->vertex_len++] = rect->y0;
+		dc->vertex[dc->vertex_len++] = rect->x1;
+		dc->vertex[dc->vertex_len++] = rect->y1;
+		dc->vertex[dc->vertex_len++] = rect->x1;
+		dc->vertex[dc->vertex_len++] = rect->y1;
+		dc->vertex[dc->vertex_len++] = rect->x0;
+		dc->vertex[dc->vertex_len++] = rect->y1;
+		dc->vertex[dc->vertex_len++] = rect->x0;
+		dc->vertex[dc->vertex_len++] = rect->y0;
+	}
 	return 0;
 }
 
