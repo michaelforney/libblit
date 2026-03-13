@@ -82,5 +82,14 @@ x11.o vulkan/x11.o: include/blt-x11.h x11.h
 libblit.a: $(OBJ-y)
 	$(AR) cr $@ $(OBJ-y)
 
+example/drm: example/drm.o libblit.a
+	$(CC) $(LDFLAGS) -o $@ example/drm.o libblit.a -l drm -l pixman-1 -l drm_amdgpu -l vulkan -l gbm
+
+example/x11: example/x11.o libblit.a
+	$(CC) $(LDFLAGS) -o $@ example/x11.o libblit.a -l pixman-1 -l vulkan -l xcb -l xcb-render -l xcb-present -l xcb-sync -l gbm
+
+example/wl: example/wl.o libblit.a
+	$(CC) $(LDFLAGS) -o $@ example/wl.o libblit.a -l pixman-1 -l vulkan -l wayland-client
+
 clean:
 	rm -f libblit.a $(OBJ-y) $(EXAMPLES-y)
