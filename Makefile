@@ -83,10 +83,10 @@ libblit.a: $(OBJ-y)
 	$(AR) cr $@ $(OBJ-y)
 
 example/drm: example/drm.o libblit.a
-	$(CC) $(LDFLAGS) -o $@ example/drm.o libblit.a -l drm -l pixman-1 -l drm_amdgpu -l vulkan -l gbm
+	$(CC) $(LDFLAGS) -o $@ example/drm.o libblit.a -l drm -l pixman-1 -l drm_amdgpu -l vulkan
 
 example/x11: example/x11.o libblit.a
-	$(CC) $(LDFLAGS) -o $@ example/x11.o libblit.a -l pixman-1 -l vulkan -l xcb -l xcb-render -l xcb-present -l xcb-sync -l gbm
+	$(CC) $(LDFLAGS) -o $@ example/x11.o libblit.a -l pixman-1 -l vulkan -l xcb -l xcb-render -l xcb-present -l xcb-sync
 
 example/wl: example/wl.o libblit.a
 	$(CC) $(LDFLAGS) -o $@ example/wl.o libblit.a -l pixman-1 -l vulkan -l wayland-client
