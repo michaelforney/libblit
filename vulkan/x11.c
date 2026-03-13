@@ -7,23 +7,17 @@
 #include "../x11.h"
 #include "priv.h"
 
-struct x11 {
-	struct blt_x11 base;
-	xcb_connection_t *conn;
-};
-
 static struct blt_surface *
 new_surface(struct blt_context *ctx_base, xcb_window_t win)
 {
 	struct context *ctx = (void *)ctx_base;
-	struct x11 *x11 = (void *)ctx->base.x11;
 	VkResult res;
 	VkSurfaceKHR vksrf;
 	struct blt_surface *srf;
 
 	res = vkCreateXcbSurfaceKHR(ctx->instance, &(VkXcbSurfaceCreateInfoKHR){
 		.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR,
-		.connection = x11->conn,
+		.connection = ctx->base.x11->conn,
 		.window = win,
 	}, NULL, &vksrf);
 	if (res != VK_SUCCESS)
@@ -48,17 +42,17 @@ struct blt_context *
 blt_vulkan_x11_new(xcb_connection_t *conn)
 {
 	struct blt_context *ctx;
-	struct x11 *x11;
+	struct blt_x11 *x11;
 
 	x11 = malloc(sizeof(*x11));
 	if (!x11)
 		goto error0;
-	x11->base = (struct blt_x11){.impl = &x11_impl};
+	x11->impl = &x11_impl;
 	x11->conn = conn;
 	ctx = blt_vulkan_new(-1, BLT_VULKAN_X11);
 	if (!ctx)
 		goto error1;
-	ctx->x11 = &x11->base;
+	ctx->x11 = x11;
 	return ctx;
 
 error1:

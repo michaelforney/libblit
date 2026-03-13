@@ -4,4 +4,5 @@ struct blt_wl_impl {
 
 struct blt_wl {
 	const struct blt_wl_impl *impl;
+	struct wl_display *dpy;
 };

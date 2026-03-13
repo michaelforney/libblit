@@ -4,4 +4,5 @@ struct blt_x11_impl {
 
 struct blt_x11 {
 	const struct blt_x11_impl *impl;
+	xcb_connection_t *conn;
 };

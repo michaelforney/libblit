@@ -6,23 +6,17 @@
 #include "../wl.h"
 #include "priv.h"
 
-struct wl {
-	struct blt_wl base;
-	struct wl_display *dpy;
-};
-
 static struct blt_surface *
 new_surface(struct blt_context *ctx_base, struct wl_surface *wlsrf, int width, int height)
 {
 	struct context *ctx = (void *)ctx_base;
-	struct wl *wl = (void *)ctx->base.wl;
 	VkResult res;
 	VkSurfaceKHR vksrf;
 	struct blt_surface *srf;
 
 	res = vkCreateWaylandSurfaceKHR(ctx->instance, &(VkWaylandSurfaceCreateInfoKHR){
 		.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
-		.display = wl->dpy,
+		.display = ctx->base.wl->dpy,
 		.surface = wlsrf,
 	}, NULL, &vksrf);
 	if (res != VK_SUCCESS)
@@ -47,17 +41,17 @@ struct blt_context *
 blt_vulkan_wl_new(struct wl_display *dpy)
 {
 	struct blt_context *ctx;
-	struct wl *wl;
+	struct blt_wl *wl;
 
 	wl = malloc(sizeof(*wl));
 	if (!wl)
 		goto error0;
-	wl->base = (struct blt_wl){.impl = &wl_impl};
+	wl->impl = &wl_impl;
 	wl->dpy = dpy;
 	ctx = blt_vulkan_new(-1, BLT_VULKAN_WAYLAND);
 	if (!ctx)
 		goto error1;
-	ctx->wl = &wl->base;
+	ctx->wl = wl;
 	return ctx;
 
 error1:
