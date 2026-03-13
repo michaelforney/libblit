@@ -1,7 +1,16 @@
 #include <limits.h>
+#include <errno.h>
+#include <inttypes.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#ifndef major
+# include <sys/sysmacros.h>
+#endif
+#include <unistd.h>
 #include <pixman.h>
 #include <vulkan/vulkan.h>
 #include <blt.h>
@@ -322,8 +331,17 @@ new_image(struct blt_context *ctx_base, int width, int height, uint32_t format, 
 {
 	struct context *ctx = (void *)ctx_base;
 	struct image *img;
+	uint64_t mods[] = {
+		0,
+	};
+	VkImageDrmFormatModifierListCreateInfoEXT modinfo = {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT,
+		.drmFormatModifierCount = LEN(mods),
+		.pDrmFormatModifiers = mods,
+	};
 	VkImageCreateInfo info = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+		.pNext = &modinfo,
 		.imageType = VK_IMAGE_TYPE_2D,
 		.extent = {width, height, 1},
 		.mipLevels = 1,
@@ -889,21 +907,70 @@ error0:
 	return -1;
 }
 
+struct pci_info {
+	uint32_t domain;
+	uint32_t bus;
+	uint32_t device;
+	uint32_t function;
+};
+
+static int
+get_pci_info(int fd, struct pci_info *pci)
+{
+	char uevent[PATH_MAX], key[128], val[128];
+	struct stat st;
+	FILE *f;
+	int ret = -1;
+
+	if (fstat(fd, &st) < 0)
+		return -1;
+	ret = snprintf(uevent, sizeof(uevent), "/sys/dev/char/%d:%d/device/uevent", major(st.st_rdev), minor(st.st_rdev));
+	if (ret < 0 || (size_t)ret > sizeof(uevent))
+		return -1;
+	f = fopen(uevent, "re");
+	if (!f)
+		return -1;
+	while (fscanf(f, "%127[^=]=%127[^\n]\n", key, val) == 2) {
+		if (strcmp(key, "PCI_SLOT_NAME") == 0) {
+			if (sscanf(val, "%" SCNx32 ":%" SCNx32 ":%" SCNx32 ".%" SCNx32, &pci->domain, &pci->bus, &pci->device, &pci->function) == 4)
+				ret = 0;
+			goto done;
+		}
+	}
+	if (feof(f))
+		errno = ENOENT;
+done:
+	fclose(f);
+	return ret;
+}
+
 struct blt_context *
-blt_vulkan_new(int flags)
+blt_vulkan_new(int fd, int flags)
 {
 	struct context *ctx;
 	VkResult res;
 	const char *ext[4];
 	VkPhysicalDevice *phys;
+	VkPhysicalDevicePCIBusInfoPropertiesEXT pci_prop = {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT,
+	};
+	VkPhysicalDeviceProperties2 phys_prop = {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+		.pNext = &pci_prop,
+	};
 	VkExtensionProperties *ext_prop = NULL;
 	VkQueueFamilyProperties *family;
 	uint32_t i, j, ext_len, phys_len, ext_prop_len, family_len;
+	struct pci_info pci;
+
+	if (fd != -1 && get_pci_info(fd, &pci) != 0)
+		goto error0;
 
 	ctx = malloc(sizeof(*ctx));
 	if (!ctx)
 		goto error0;
 	ctx->base = (struct blt_context){.impl = &impl};
+	ctx->fd = fd;
 
 	ext_len = 0;
 	if (flags & (BLT_VULKAN_WAYLAND|BLT_VULKAN_X11))
@@ -927,6 +994,8 @@ blt_vulkan_new(int flags)
 	ext_len = 0;
 	if (flags & (BLT_VULKAN_WAYLAND|BLT_VULKAN_X11))
 		ext[ext_len++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+	ext[ext_len++] = VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME;
+	ext[ext_len++] = VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME;
 
 	res = vkEnumeratePhysicalDevices(ctx->instance, &phys_len, NULL);
 	if (res != VK_SUCCESS)
@@ -948,16 +1017,31 @@ blt_vulkan_new(int flags)
 		res = vkEnumerateDeviceExtensionProperties(phys[i], NULL, &ext_prop_len, ext_prop);
 		if (res != VK_SUCCESS)
 			goto error4;
-		for (j = 0; j < ext_len; ++j) {
-			if (has_extension(ext_prop, ext_prop_len, ext[i])) {
-				ctx->phys = phys[i];
-				goto found;
+		if (fd != -1) {
+			if (!has_extension(ext_prop, ext_prop_len, "VK_EXT_pci_bus_info")) {
+				fprintf(stderr, "device %d is missing pci_bus_info\n", i);
+				continue;
 			}
+			vkGetPhysicalDeviceProperties2(phys[i], &phys_prop);
+			fprintf(stderr, "device %" PRIu32 " %04x:%02x:%02x.%x\n", i, pci_prop.pciDomain, pci_prop.pciBus, pci_prop.pciDevice, pci_prop.pciFunction);
+			if (pci_prop.pciDomain != pci.domain || pci_prop.pciBus != pci.bus ||
+			    pci_prop.pciDevice != pci.device || pci_prop.pciFunction != pci.function)
+			{
+				continue;
+			}
+		}
+		for (j = 0; j < ext_len; ++j) {
+			if (!has_extension(ext_prop, ext_prop_len, ext[i]))
+				break;
+		}
+		if (j == ext_len) {
+			ctx->phys = phys[i];
+			break;
 		}
 	}
 	if (ctx->phys == VK_NULL_HANDLE)
 		goto error4;
-found:
+	printf("found\n");
 	vkGetPhysicalDeviceQueueFamilyProperties(ctx->phys, &family_len, NULL);
 	family = blt_reallocarray(NULL, family_len, sizeof(family[0]));
 	if (!family)

@@ -54,7 +54,7 @@ blt_vulkan_wl_new(struct wl_display *dpy)
 		goto error0;
 	wl->base = (struct blt_wl){.impl = &wl_impl};
 	wl->dpy = dpy;
-	ctx = blt_vulkan_new(BLT_VULKAN_WAYLAND);
+	ctx = blt_vulkan_new(-1, BLT_VULKAN_WAYLAND);
 	if (!ctx)
 		goto error1;
 	ctx->wl = &wl->base;

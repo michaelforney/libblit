@@ -7,6 +7,7 @@ struct pipeline {
 
 struct context {
 	struct blt_context base;
+	int fd;
 	VkInstance instance;
 	VkPhysicalDevice phys;
 	VkDevice dev;
@@ -28,5 +29,5 @@ enum {
 	BLT_VULKAN_WAYLAND  = 1<<1,
 };
 
-struct blt_context *blt_vulkan_new(int flags);
+struct blt_context *blt_vulkan_new(int fd, int flags);
 struct blt_surface *blt_vulkan_new_surface(struct context *, VkSurfaceKHR, int, int, uint32_t);

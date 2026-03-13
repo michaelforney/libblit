@@ -55,7 +55,7 @@ blt_vulkan_x11_new(xcb_connection_t *conn)
 		goto error0;
 	x11->base = (struct blt_x11){.impl = &x11_impl};
 	x11->conn = conn;
-	ctx = blt_vulkan_new(BLT_VULKAN_X11);
+	ctx = blt_vulkan_new(-1, BLT_VULKAN_X11);
 	if (!ctx)
 		goto error1;
 	ctx->x11 = &x11->base;
