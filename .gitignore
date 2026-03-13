@@ -3,3 +3,6 @@
 /vulkan/*.inc
 /config.mk
 /libblit.a
+/example/drm
+/example/wl
+/example/x11
