@@ -2,6 +2,12 @@
 #include "blt.h"
 #include "priv.h"
 
+void
+blt_destroy(struct blt_context *ctx)
+{
+	ctx->impl->destroy(ctx);
+}
+
 struct blt_image *
 blt_new_image(struct blt_context *ctx, int width, int height, uint32_t format, int flags)
 {

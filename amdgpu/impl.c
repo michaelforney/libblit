@@ -288,6 +288,15 @@ static const uint32_t pipeline[] = {
 };
 
 static void
+destroy(struct blt_context *ctx_base)
+{
+	struct context *ctx = (void *)ctx_base;
+
+	/* TODO */
+	free(ctx);
+}
+
+static void
 image_destroy(struct blt_context *ctx, struct blt_image *img)
 {
 }
@@ -930,6 +939,7 @@ rect(struct blt_context *ctx_base, size_t len, const struct blt_rect *rect)
 }
 
 static const struct blt_context_impl impl = {
+	.destroy = destroy,
 	.new_image = new_image,
 	.new_solid = blt_new_solid_image,
 	.setup = setup,

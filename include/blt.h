@@ -61,6 +61,8 @@ enum {
 	BLT_IMAGE_SRC = 1<<1,
 };
 
+void blt_destroy(struct blt_context *ctx);
+
 struct blt_image *blt_new_image(struct blt_context *ctx, int x, int y, uint32_t format, int flags);
 struct blt_image *blt_new_solid(struct blt_context *ctx, struct blt_color color);
 

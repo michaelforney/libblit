@@ -5,6 +5,8 @@
 void *blt_reallocarray(void *, size_t, size_t);
 
 struct blt_context_impl {
+	void (*destroy)(struct blt_context *);
+
 	struct blt_image *(*new_image)(struct blt_context *, int, int, uint32_t, int);
 	struct blt_image *(*new_solid)(struct blt_context *, struct blt_color);
 
