@@ -17,8 +17,10 @@ Here are some planned rendering and display mechanisms:
   `wl_shm`, attached to `wl_surface`.
 - Rendering to mmapped DRM dumb buffer with pixman, presented directly
   to display with KMS.
-- Rendering to `VkImage` imported from `gbm_bo` created for scanout with
-  GBM, exported to DMA-BUF fd, presented directly to display with KMS.
+- Rendering to a `VkImage` created for scanout with
+  `VK_EXT_image_drm_format_modifier` by querying the DRM
+  `IN_FORMATS` property for the plane, exported to DMA-BUF fd,
+  presented directly to display with KMS.
 
 ## Current status
 
