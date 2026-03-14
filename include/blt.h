@@ -59,8 +59,6 @@ enum {
 	BLT_IMAGE_DST = 1<<0,
 	/* image can be used as a source */
 	BLT_IMAGE_SRC = 1<<1,
-	/* image can be attached to a framebuffer and scanned out */
-	BLT_IMAGE_SCANOUT = 1<<2,
 };
 
 struct blt_image *blt_new_image(struct blt_context *ctx, int x, int y, uint32_t format, int flags);
