@@ -7,7 +7,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#ifndef major
+#ifndef makedev
 # include <sys/sysmacros.h>
 #endif
 #include <unistd.h>
@@ -909,70 +909,28 @@ error0:
 	return -1;
 }
 
-struct pci_info {
-	uint32_t domain;
-	uint32_t bus;
-	uint32_t device;
-	uint32_t function;
-};
-
-static int
-get_pci_info(int fd, struct pci_info *pci)
-{
-	char uevent[PATH_MAX], key[128], val[128];
-	struct stat st;
-	FILE *f;
-	int ret = -1;
-
-	if (fstat(fd, &st) < 0)
-		return -1;
-	ret = snprintf(uevent, sizeof(uevent), "/sys/dev/char/%d:%d/device/uevent", major(st.st_rdev), minor(st.st_rdev));
-	if (ret < 0 || (size_t)ret > sizeof(uevent))
-		return -1;
-	f = fopen(uevent, "re");
-	if (!f)
-		return -1;
-	while (fscanf(f, "%127[^=]=%127[^\n]\n", key, val) == 2) {
-		if (strcmp(key, "PCI_SLOT_NAME") == 0) {
-			if (sscanf(val, "%" SCNx32 ":%" SCNx32 ":%" SCNx32 ".%" SCNx32, &pci->domain, &pci->bus, &pci->device, &pci->function) == 4)
-				ret = 0;
-			goto done;
-		}
-	}
-	if (feof(f))
-		errno = ENOENT;
-done:
-	fclose(f);
-	return ret;
-}
-
 struct blt_context *
-blt_vulkan_new(int fd, int flags)
+blt_vulkan_new(dev_t dev, int flags)
 {
 	struct context *ctx;
 	VkResult res;
 	const char *ext[4];
 	VkPhysicalDevice *phys;
-	VkPhysicalDevicePCIBusInfoPropertiesEXT pci_prop = {
-		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT,
+	VkPhysicalDeviceDrmPropertiesEXT drm_prop = {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRM_PROPERTIES_EXT,
 	};
 	VkPhysicalDeviceProperties2 phys_prop = {
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
-		.pNext = &pci_prop,
+		.pNext = &drm_prop,
 	};
 	VkExtensionProperties *ext_prop = NULL;
 	VkQueueFamilyProperties *family;
 	uint32_t i, j, ext_len, phys_len, ext_prop_len, family_len;
-	struct pci_info pci;
-
-	if (fd != -1 && get_pci_info(fd, &pci) != 0)
-		goto error0;
 
 	ctx = malloc(sizeof(*ctx));
 	if (!ctx)
 		goto error0;
 	ctx->base = (struct blt_context){.impl = &impl};
-	ctx->fd = fd;
 
 	ext_len = 0;
 	if (flags & (BLT_VULKAN_WAYLAND|BLT_VULKAN_X11))
@@ -1019,15 +977,16 @@ blt_vulkan_new(int fd, int flags)
 		res = vkEnumerateDeviceExtensionProperties(phys[i], NULL, &ext_prop_len, ext_prop);
 		if (res != VK_SUCCESS)
 			goto error4;
-		if (fd != -1) {
-			if (!has_extension(ext_prop, ext_prop_len, "VK_EXT_pci_bus_info")) {
-				fprintf(stderr, "device %d is missing pci_bus_info\n", i);
+		if (dev) {
+			if (!has_extension(ext_prop, ext_prop_len, "VK_EXT_physical_device_drm")) {
+				fprintf(stderr, "device %d is missing VK_EXT_physical_device_drm\n", i);
 				continue;
 			}
 			vkGetPhysicalDeviceProperties2(phys[i], &phys_prop);
-			fprintf(stderr, "device %" PRIu32 " %04x:%02x:%02x.%x\n", i, pci_prop.pciDomain, pci_prop.pciBus, pci_prop.pciDevice, pci_prop.pciFunction);
-			if (pci_prop.pciDomain != pci.domain || pci_prop.pciBus != pci.bus ||
-			    pci_prop.pciDevice != pci.device || pci_prop.pciFunction != pci.function)
+			fprintf(stderr, "device %"PRIu32" %"PRId64":%"PRId64" %"PRId64":%"PRId64"\n",
+			        i, drm_prop.primaryMajor, drm_prop.primaryMinor, drm_prop.renderMajor, drm_prop.renderMinor);
+			if ((!drm_prop.hasPrimary || dev != makedev(drm_prop.primaryMajor, drm_prop.primaryMinor)) &&
+			    (!drm_prop.hasRender || dev != makedev(drm_prop.renderMajor, drm_prop.renderMinor)))
 			{
 				continue;
 			}

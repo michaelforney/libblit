@@ -1,3 +1,5 @@
+#include <sys/types.h>
+
 struct pipeline {
 	VkPipeline vk;
 	VkPipelineLayout layout;
@@ -29,5 +31,5 @@ enum {
 	BLT_VULKAN_WAYLAND  = 1<<1,
 };
 
-struct blt_context *blt_vulkan_new(int fd, int flags);
+struct blt_context *blt_vulkan_new(dev_t dev, int flags);
 struct blt_surface *blt_vulkan_new_surface(struct context *, VkSurfaceKHR, int, int, uint32_t);
