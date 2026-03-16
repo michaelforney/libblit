@@ -59,6 +59,8 @@ enum {
 	BLT_IMAGE_DST = 1<<0,
 	/* image can be used as a source */
 	BLT_IMAGE_SRC = 1<<1,
+	/* image can be exported as a DMABUF */
+	BLT_IMAGE_DMABUF = 1<<2,
 };
 
 void blt_destroy(struct blt_context *ctx);
