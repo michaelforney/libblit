@@ -197,7 +197,7 @@ main(int argc, char *argv[])
 		fatal("blt_drm_new:");
 	printf("created context\n");
 	//fb.image = blt_new_image(ctx, crtc->mode.hdisplay, crtc->mode.vdisplay, BLT_IMAGE_DST | BLT_IMAGE_SCANOUT, BLT_FMT('X', 'R', '2', '4'), BLT_MOD_INVALID, NULL);
-	fb.image = blt_new_image(ctx, crtc->mode.hdisplay, crtc->mode.vdisplay, BLT_FMT('X', 'R', '2', '4'), BLT_IMAGE_DST | BLT_IMAGE_SCANOUT);
+	fb.image = blt_new_image(ctx, crtc->mode.hdisplay, crtc->mode.vdisplay, BLT_FMT('X', 'R', '2', '4'), BLT_IMAGE_DST | BLT_IMAGE_DMABUF);
 	if (!fb.image)
 		fatal("blt_new_image:");
 	printf("created image\n");

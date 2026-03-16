@@ -98,7 +98,7 @@ image_export_dmabuf(struct blt_context *ctx_base, struct blt_image *img_base, st
 		return -1;
 	*mod = props.drmFormatModifier;
 	vkGetImageSubresourceLayout(ctx->dev, img->vk, &(VkImageSubresource){
-		.aspectMask = VK_IMAGE_ASPECT_PLANE_0_BIT,
+		.aspectMask = VK_IMAGE_ASPECT_MEMORY_PLANE_0_BIT_EXT,
 	}, &layout);
 	plane[0].offset = layout.offset;
 	plane[0].stride = layout.rowPitch;
@@ -343,14 +343,19 @@ new_image(struct blt_context *ctx_base, int width, int height, uint32_t format, 
 	uint64_t mods[] = {
 		0,
 	};
-	VkImageDrmFormatModifierListCreateInfoEXT modinfo = {
+	VkResult res;
+	VkImageDrmFormatModifierListCreateInfoEXT image_mods = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT,
 		.drmFormatModifierCount = LEN(mods),
 		.pDrmFormatModifiers = mods,
 	};
+	VkExternalMemoryImageCreateInfo image_extern = {
+		.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO,
+		.pNext = &image_mods,
+		.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+	};
 	VkImageCreateInfo info = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-		.pNext = &modinfo,
 		.imageType = VK_IMAGE_TYPE_2D,
 		.extent = {width, height, 1},
 		.mipLevels = 1,
@@ -362,9 +367,15 @@ new_image(struct blt_context *ctx_base, int width, int height, uint32_t format, 
 		.pQueueFamilyIndices = &ctx->queue_index,
 		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 	};
+	VkMemoryDedicatedAllocateInfo mem_image = {
+		.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
+	};
+	VkExportMemoryAllocateInfo mem_export = {
+		.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO,
+		.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+	};
 	VkMemoryPropertyFlags memory_flags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 	VkMemoryRequirements reqs;
-	VkResult res;
 
 	info.format = vulkan_format(format);
 	if (info.format == VK_FORMAT_UNDEFINED)
@@ -374,6 +385,11 @@ new_image(struct blt_context *ctx_base, int width, int height, uint32_t format, 
 		info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	if (flags & BLT_IMAGE_SRC)
 		info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+	if (flags & BLT_IMAGE_DMABUF) {
+		info.tiling = VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT;
+		info.pNext = &image_extern;
+		mem_image.pNext = &mem_export;
+	}
 
 	img = malloc(sizeof(*img));
 	if (!img)
@@ -388,12 +404,10 @@ new_image(struct blt_context *ctx_base, int width, int height, uint32_t format, 
 	if (res != VK_SUCCESS)
 		goto error1;
 	vkGetImageMemoryRequirements(ctx->dev, img->vk, &reqs);
+	mem_image.image = img->vk;
 	res = vkAllocateMemory(ctx->dev, &(VkMemoryAllocateInfo){
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.pNext = &(VkMemoryDedicatedAllocateInfo){
-			.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
-			.image = img->vk,
-		},
+		.pNext = &mem_image,
 		.allocationSize = reqs.size,
 		.memoryTypeIndex = find_memory_type(ctx, reqs.memoryTypeBits, memory_flags),
 	}, NULL, &img->memory);
@@ -953,7 +967,7 @@ blt_vulkan_new(dev_t dev, int flags)
 	res = vkCreateInstance(&(VkInstanceCreateInfo){
 		.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
 		.pApplicationInfo = &(VkApplicationInfo){
-			.apiVersion = VK_MAKE_VERSION(1, 1, 0),
+			.apiVersion = VK_MAKE_VERSION(1, 3, 0),
 		},
 		.enabledExtensionCount = ext_len,
 		.ppEnabledExtensionNames = ext,
@@ -965,6 +979,7 @@ blt_vulkan_new(dev_t dev, int flags)
 	if (flags & (BLT_VULKAN_WAYLAND|BLT_VULKAN_X11))
 		ext[ext_len++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 	ext[ext_len++] = VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME;
+	ext[ext_len++] = VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME;
 	ext[ext_len++] = VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME;
 
 	res = vkEnumeratePhysicalDevices(ctx->instance, &phys_len, NULL);
