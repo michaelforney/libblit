@@ -34,7 +34,7 @@ vulkan/impl.o vulkan/wl.o vulkan/x11.o: vulkan/priv.h
 vulkan/impl.o: vulkan/vert.vert.inc vulkan/fill.frag.inc vulkan/copy.frag.inc
 
 .glsl.spv:
-	$(GLSLANG) --target-env vulkan1.1 -o $@ $<
+	$(GLSLANG) --target-env vulkan1.3 -o $@ $<
 
 .spv.inc:
 	$(BIN_TO_HEX)
