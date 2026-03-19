@@ -20,7 +20,6 @@
 struct draw_context {
 	VkCommandBuffer cmd;
 	VkSemaphore semaphore;
-	VkFramebuffer fb;
 	VkFence fence;
 	VkDeviceMemory vertex_memory;
 	VkBuffer vertex_buffer;
@@ -234,17 +233,6 @@ make_draw_context(struct context *ctx, struct image *img)
 	dc = malloc(sizeof(*dc));
 	if (!dc)
 		goto error0;
-	res = vkCreateFramebuffer(ctx->dev, &(VkFramebufferCreateInfo){
-		.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-		.renderPass = ctx->render_pass,
-		.attachmentCount = 1,
-		.pAttachments = (VkImageView[]){img->view},
-		.width = img->base.width,
-		.height = img->base.height,
-		.layers = 1,
-	}, NULL, &dc->fb);
-	if (res != VK_SUCCESS)
-		goto error1;
 	dc->vertex_len = 0;
 	dc->vertex_pos = 0;
 	dc->vertex_cap = 0x400;
@@ -255,30 +243,28 @@ make_draw_context(struct context *ctx, struct image *img)
 		.commandBufferCount = 1,
 	}, &dc->cmd);
 	if (res != VK_SUCCESS)
-		goto error2;
+		goto error1;
 	res = alloc_buffer(ctx, dc->vertex_cap * sizeof(dc->vertex[0]), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, &dc->vertex_buffer, &dc->vertex_memory);
 	if (res != VK_SUCCESS)
-		goto error3;
+		goto error2;
 	res = vkMapMemory(ctx->dev, dc->vertex_memory, 0, VK_WHOLE_SIZE, 0, &data);
 	if (res != VK_SUCCESS)
-		goto error4;
+		goto error3;
 	dc->vertex = data;
 	res = vkCreateSemaphore(ctx->dev, &(VkSemaphoreCreateInfo){
 		.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
 	}, NULL, &dc->semaphore);
 	if (res != VK_SUCCESS)
-		goto error5;
+		goto error4;
 	return dc;
 
-error5:
-	vkUnmapMemory(ctx->dev, dc->vertex_memory);
 error4:
+	vkUnmapMemory(ctx->dev, dc->vertex_memory);
+error3:
 	vkDestroyBuffer(ctx->dev, dc->vertex_buffer, NULL);
 	vkFreeMemory(ctx->dev, dc->vertex_memory, NULL);
-error3:
-	vkFreeCommandBuffers(ctx->dev, ctx->cmd_pool, 1, (VkCommandBuffer[]){dc->cmd});
 error2:
-	vkDestroyFramebuffer(ctx->dev, dc->fb, NULL);
+	vkFreeCommandBuffers(ctx->dev, ctx->cmd_pool, 1, (VkCommandBuffer[]){dc->cmd});
 error1:
 	free(dc);
 error0:
@@ -590,7 +576,7 @@ submit(struct context *ctx)
 	VkResult res;
 
 	flush(ctx);
-	vkCmdEndRenderPass(dc->cmd);
+	vkCmdEndRendering(dc->cmd);
 	res = vkEndCommandBuffer(dc->cmd);
 	if (res != VK_SUCCESS)
 		return -1;
@@ -633,12 +619,19 @@ setup(struct blt_context *ctx_base, int op, struct blt_image *dst_base, struct b
 		});
 		if (res != VK_SUCCESS)
 			return -1;
-		vkCmdBeginRenderPass(dc->cmd, &(VkRenderPassBeginInfo){
-			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-			.renderPass = ctx->render_pass,
-			.framebuffer = dc->fb,
+		vkCmdBeginRendering(dc->cmd, &(VkRenderingInfo){
+			.sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
 			.renderArea.extent = {dst->base.width, dst->base.height},
-		}, VK_SUBPASS_CONTENTS_INLINE);
+			.layerCount = 1,
+			.colorAttachmentCount = 1,
+			.pColorAttachments = &(VkRenderingAttachmentInfo){
+				.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+				.imageView = dst->view,
+				.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+			},
+		});
 		vkCmdBindVertexBuffers(dc->cmd, 0, 1, (VkBuffer[]){dc->vertex_buffer}, (VkDeviceSize[]){0});
 		vkCmdSetViewport(dc->cmd, 0, 1, &(VkViewport){
 			.width = dst->base.width,
@@ -824,6 +817,11 @@ make_pipeline(struct context *ctx)
 		goto error4;
 	info[0] = (VkGraphicsPipelineCreateInfo){
 		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+		.pNext = &(VkPipelineRenderingCreateInfo){
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+			.colorAttachmentCount = 1,
+			.pColorAttachmentFormats = (VkFormat[]){VK_FORMAT_B8G8R8A8_UNORM},
+		},
 		.stageCount = 2,
 		.pStages = (VkPipelineShaderStageCreateInfo[]){
 			{
@@ -893,8 +891,6 @@ make_pipeline(struct context *ctx)
 			},
 		},
 		.layout = ctx->fill_pipeline.layout,
-		.renderPass = ctx->render_pass,
-		.subpass = 0,
 	};
 	info[1] = info[0];
 	info[1].pStages = (VkPipelineShaderStageCreateInfo[]){
@@ -1044,6 +1040,10 @@ blt_vulkan_new(dev_t dev, int flags)
 
 	res = vkCreateDevice(ctx->phys, &(VkDeviceCreateInfo){
 		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+		.pNext = &(VkPhysicalDeviceVulkan13Features){
+			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+			.dynamicRendering = VK_TRUE,
+		},
 		.queueCreateInfoCount = 1,
 		.pQueueCreateInfos = &(VkDeviceQueueCreateInfo){
 			.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -1082,29 +1082,6 @@ blt_vulkan_new(dev_t dev, int flags)
 	}, NULL, &ctx->copy_shader);
 	if (res != VK_SUCCESS)
 		goto error8;
-	res = vkCreateRenderPass(ctx->dev, &(VkRenderPassCreateInfo){
-		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-		.attachmentCount = 1,
-		.pAttachments = &(VkAttachmentDescription){
-			.format = VK_FORMAT_B8G8R8A8_UNORM,
-			.samples = VK_SAMPLE_COUNT_1_BIT,
-			.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-			.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-			.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-		},
-		.subpassCount = 1,
-		.pSubpasses = &(VkSubpassDescription){
-			.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-			.colorAttachmentCount = 1,
-			.pColorAttachments = &(VkAttachmentReference){
-				.attachment = 0,
-				.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			},
-		},
-	}, NULL, &ctx->render_pass);
-	if (res != VK_SUCCESS)
-		goto error9;
 	res = vkCreateSampler(ctx->dev, &(VkSamplerCreateInfo){
 		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
 		.magFilter = VK_FILTER_NEAREST,
@@ -1115,17 +1092,17 @@ blt_vulkan_new(dev_t dev, int flags)
 		.unnormalizedCoordinates = VK_TRUE,
 	}, NULL, &ctx->rgb_sampler);
 	if (res != VK_SUCCESS)
-		goto error10;
+		goto error9;
 	res = make_pipeline(ctx);
 	if (res != VK_SUCCESS)
-		goto error11;
+		goto error10;
 	res = vkCreateCommandPool(ctx->dev, &(VkCommandPoolCreateInfo){
 		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
 		.queueFamilyIndex = ctx->queue_index,
 		.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
 	}, NULL, &ctx->cmd_pool);
 	if (res != VK_SUCCESS)
-		goto error12;
+		goto error11;
 
 	free(family);
 	free(ext_prop);
@@ -1133,13 +1110,11 @@ blt_vulkan_new(dev_t dev, int flags)
 
 	return &ctx->base;
 
-error12:
+error11:
 	vkDestroyPipeline(ctx->dev, ctx->fill_pipeline.vk, NULL);
 	vkDestroyPipeline(ctx->dev, ctx->copy_rgb_pipeline.vk, NULL);
-error11:
-	vkDestroyPipelineLayout(ctx->dev, ctx->fill_pipeline.layout, NULL);
 error10:
-	vkDestroyRenderPass(ctx->dev, ctx->render_pass, NULL);
+	vkDestroyPipelineLayout(ctx->dev, ctx->fill_pipeline.layout, NULL);
 error9:
 	vkDestroyShaderModule(ctx->dev, ctx->copy_shader, NULL);
 error8:

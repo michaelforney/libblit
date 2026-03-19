@@ -15,7 +15,6 @@ struct context {
 	VkDevice dev;
 	VkQueue queue;
 	uint32_t queue_index;
-	VkRenderPass render_pass;
 	VkDescriptorPool desc_pool;
 	VkCommandPool cmd_pool;
 	VkShaderModule vert_shader, fill_shader, copy_shader;
