@@ -17,8 +17,7 @@ OBJ-y=\
 	drm.o\
 	image.o\
 	solid.o\
-	surface.o\
-	util.o
+	surface.o
 OBJ-$(WITH_WAYLAND)+=wl.o
 OBJ-$(WITH_X11)+=x11.o
 

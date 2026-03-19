@@ -1,3 +1,4 @@
+#define _GNU_SOURCE  /* needed for reallocarray (POSIX.1-2024) */
 #include <limits.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -449,7 +450,7 @@ blt_vulkan_new_surface(struct context *ctx, VkSurfaceKHR vk, int width, int heig
 	res = vkGetPhysicalDeviceSurfaceFormatsKHR(ctx->phys, vk, &formats_len, NULL);
 	if (res != VK_SUCCESS)
 		goto error0;
-	formats = blt_reallocarray(NULL, formats_len, sizeof(formats[0]));
+	formats = reallocarray(NULL, formats_len, sizeof(formats[0]));
 	if (!formats)
 		goto error0;
 	res = vkGetPhysicalDeviceSurfaceFormatsKHR(ctx->phys, vk, &formats_len, formats);
@@ -493,13 +494,13 @@ blt_vulkan_new_surface(struct context *ctx, VkSurfaceKHR vk, int width, int heig
 	res = vkGetSwapchainImagesKHR(ctx->dev, srf->swapchain, &srf->img_len, NULL);
 	if (res != VK_SUCCESS)
 		goto error2;
-	srf->img = blt_reallocarray(NULL, srf->img_len, sizeof(srf->img[0]));
+	srf->img = reallocarray(NULL, srf->img_len, sizeof(srf->img[0]));
 	if (!srf->img)
 		goto error2;
-	srf->age = blt_reallocarray(NULL, srf->img_len, sizeof(srf->age[0]));
+	srf->age = reallocarray(NULL, srf->img_len, sizeof(srf->age[0]));
 	if (!srf->age)
 		goto error3;
-	vkimg = blt_reallocarray(NULL, srf->img_len, sizeof(vkimg[0]));
+	vkimg = reallocarray(NULL, srf->img_len, sizeof(vkimg[0]));
 	if (!vkimg)
 		goto error4;
 	res = vkGetSwapchainImagesKHR(ctx->dev, srf->swapchain, &srf->img_len, vkimg);
@@ -981,7 +982,7 @@ blt_vulkan_new(dev_t dev, int flags)
 	res = vkEnumeratePhysicalDevices(ctx->instance, &phys_len, NULL);
 	if (res != VK_SUCCESS)
 		goto error1;
-	phys = blt_reallocarray(NULL, phys_len, sizeof(phys[0]));
+	phys = reallocarray(NULL, phys_len, sizeof(phys[0]));
 	if (!phys)
 		goto error2;
 	res = vkEnumeratePhysicalDevices(ctx->instance, &phys_len, phys);
@@ -992,7 +993,7 @@ blt_vulkan_new(dev_t dev, int flags)
 		res = vkEnumerateDeviceExtensionProperties(phys[i], NULL, &ext_prop_len, NULL);
 		if (res != VK_SUCCESS)
 			goto error4;
-		ext_prop = blt_reallocarray(ext_prop, ext_prop_len, sizeof(ext_prop[0]));
+		ext_prop = reallocarray(ext_prop, ext_prop_len, sizeof(ext_prop[0]));
 		if (!ext_prop)
 			goto error4;
 		res = vkEnumerateDeviceExtensionProperties(phys[i], NULL, &ext_prop_len, ext_prop);
@@ -1025,7 +1026,7 @@ blt_vulkan_new(dev_t dev, int flags)
 		goto error4;
 	printf("found\n");
 	vkGetPhysicalDeviceQueueFamilyProperties(ctx->phys, &family_len, NULL);
-	family = blt_reallocarray(NULL, family_len, sizeof(family[0]));
+	family = reallocarray(NULL, family_len, sizeof(family[0]));
 	if (!family)
 		goto error4;
 	vkGetPhysicalDeviceQueueFamilyProperties(ctx->phys, &family_len, family);
