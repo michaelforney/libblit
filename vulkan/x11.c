@@ -8,16 +8,17 @@
 #include "priv.h"
 
 static struct blt_surface *
-new_surface(struct blt_context *ctx_base, xcb_window_t win)
+new_surface(struct blt_context *ctx, xcb_window_t win)
 {
-	struct context *ctx = (void *)ctx_base;
+	VkInstance instance;
 	VkResult res;
 	VkSurfaceKHR vksrf;
 	struct blt_surface *srf;
 
-	res = vkCreateXcbSurfaceKHR(ctx->instance, &(VkXcbSurfaceCreateInfoKHR){
+	instance = blt_vulkan_instance(ctx);
+	res = vkCreateXcbSurfaceKHR(instance, &(VkXcbSurfaceCreateInfoKHR){
 		.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR,
-		.connection = ctx->base.x11->conn,
+		.connection = ctx->x11->conn,
 		.window = win,
 	}, NULL, &vksrf);
 	if (res != VK_SUCCESS)
@@ -29,7 +30,7 @@ new_surface(struct blt_context *ctx_base, xcb_window_t win)
 	return srf;
 
 error1:
-	vkDestroySurfaceKHR(ctx->instance, vksrf, NULL);
+	vkDestroySurfaceKHR(instance, vksrf, NULL);
 error0:
 	return NULL;
 }

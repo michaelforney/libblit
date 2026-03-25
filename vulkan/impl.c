@@ -1,4 +1,5 @@
 #define _GNU_SOURCE  /* needed for reallocarray (POSIX.1-2024) */
+#include <assert.h>
 #include <limits.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -17,6 +18,31 @@
 #include <blt.h>
 #include "../priv.h"
 #include "priv.h"
+
+struct pipeline {
+	VkPipeline vk;
+	VkPipelineLayout layout;
+	VkDescriptorSet desc;
+	VkDescriptorSetLayout desc_layout;
+};
+
+struct context {
+	struct blt_context base;
+	int fd;
+	VkInstance instance;
+	VkPhysicalDevice phys;
+	VkDevice dev;
+	VkQueue queue;
+	uint32_t queue_index;
+	VkDescriptorPool desc_pool;
+	VkCommandPool cmd_pool;
+	VkShaderModule vert_shader, fill_shader, copy_shader;
+	struct pipeline fill_pipeline, copy_rgb_pipeline;
+	VkSampler rgb_sampler;
+
+	PFN_vkGetMemoryFdKHR get_memory_fd;
+	PFN_vkGetImageDrmFormatModifierPropertiesEXT get_image_drm_format_modifier_properties;
+};
 
 struct draw_context {
 	VkCommandBuffer cmd;
@@ -419,8 +445,9 @@ error0:
 }
 
 struct blt_surface *
-blt_vulkan_new_surface(struct context *ctx, VkSurfaceKHR vk, int width, int height, uint32_t format)
+blt_vulkan_new_surface(struct blt_context *ctx_base, VkSurfaceKHR vk, int width, int height, uint32_t format)
 {
+	struct context *ctx = (void *)ctx_base;
 	struct surface *srf;
 	VkSurfaceCapabilitiesKHR caps;
 	VkImage *vkimg;
@@ -1136,4 +1163,13 @@ error1:
 	free(ctx);
 error0:
 	return NULL;
+}
+
+VkInstance
+blt_vulkan_instance(struct blt_context *ctx_base)
+{
+	struct context *ctx = (void *)ctx_base;
+
+	assert(ctx_base->impl == &impl);
+	return ctx->instance;
 }

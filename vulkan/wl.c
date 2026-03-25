@@ -7,16 +7,17 @@
 #include "priv.h"
 
 static struct blt_surface *
-new_surface(struct blt_context *ctx_base, struct wl_surface *wlsrf, int width, int height)
+new_surface(struct blt_context *ctx, struct wl_surface *wlsrf, int width, int height)
 {
-	struct context *ctx = (void *)ctx_base;
+	VkInstance instance;
 	VkResult res;
 	VkSurfaceKHR vksrf;
 	struct blt_surface *srf;
 
-	res = vkCreateWaylandSurfaceKHR(ctx->instance, &(VkWaylandSurfaceCreateInfoKHR){
+	instance = blt_vulkan_instance(ctx);
+	res = vkCreateWaylandSurfaceKHR(instance, &(VkWaylandSurfaceCreateInfoKHR){
 		.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
-		.display = ctx->base.wl->dpy,
+		.display = ctx->wl->dpy,
 		.surface = wlsrf,
 	}, NULL, &vksrf);
 	if (res != VK_SUCCESS)
@@ -28,7 +29,7 @@ new_surface(struct blt_context *ctx_base, struct wl_surface *wlsrf, int width, i
 	return srf;
 
 error1:
-	vkDestroySurfaceKHR(ctx->instance, vksrf, NULL);
+	vkDestroySurfaceKHR(instance, vksrf, NULL);
 error0:
 	return NULL;
 }

@@ -1,34 +1,11 @@
 #include <sys/types.h>
 
-struct pipeline {
-	VkPipeline vk;
-	VkPipelineLayout layout;
-	VkDescriptorSet desc;
-	VkDescriptorSetLayout desc_layout;
-};
-
-struct context {
-	struct blt_context base;
-	int fd;
-	VkInstance instance;
-	VkPhysicalDevice phys;
-	VkDevice dev;
-	VkQueue queue;
-	uint32_t queue_index;
-	VkDescriptorPool desc_pool;
-	VkCommandPool cmd_pool;
-	VkShaderModule vert_shader, fill_shader, copy_shader;
-	struct pipeline fill_pipeline, copy_rgb_pipeline;
-	VkSampler rgb_sampler;
-
-	PFN_vkGetMemoryFdKHR get_memory_fd;
-	PFN_vkGetImageDrmFormatModifierPropertiesEXT get_image_drm_format_modifier_properties;
-};
-
 enum {
 	BLT_VULKAN_X11      = 1<<0,
 	BLT_VULKAN_WAYLAND  = 1<<1,
 };
 
+VkInstance blt_vulkan_instance(struct blt_context *);
+
 struct blt_context *blt_vulkan_new(dev_t dev, int flags);
-struct blt_surface *blt_vulkan_new_surface(struct context *, VkSurfaceKHR, int, int, uint32_t);
+struct blt_surface *blt_vulkan_new_surface(struct blt_context *, VkSurfaceKHR, int, int, uint32_t);
